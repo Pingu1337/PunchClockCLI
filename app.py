@@ -1,3 +1,4 @@
+import textwrap
 from colorama import Fore, Back, Style
 import argparse
 from datetime import time, date, datetime
@@ -25,7 +26,7 @@ def check_in():
         return
     t = now.strftime("%H:%M:%S")
     Print(Fore.LIGHTGREEN_EX,
-          f'Check In @ {Fore.LIGHTMAGENTA_EX + t}')
+          f'Punched In @ {Fore.LIGHTMAGENTA_EX + t}')
 
 
 def check_out():
@@ -36,7 +37,7 @@ def check_out():
         return
     t = now.strftime("%H:%M:%S")
     Print(Fore.LIGHTRED_EX,
-          f'Check Out @ {Fore.LIGHTMAGENTA_EX + t}')
+          f'Punched Out @ {Fore.LIGHTMAGENTA_EX + t}')
 
 
 def get_status():
@@ -47,9 +48,9 @@ def get_status():
         Print(Fore.LIGHTMAGENTA_EX, status)
         return
     if not math.isnan(float(data['check_in:time_stamp'])):
-        status = f'checked in @ {Fore.LIGHTCYAN_EX + data["check_in"]}'
+        status = f'punched in @ {Fore.LIGHTCYAN_EX + data["check_in"]}'
     if not math.isnan(float(data['check_out:time_stamp'])):
-        status = f'checked out @ {Fore.LIGHTCYAN_EX + data["check_out"]}'
+        status = f'punched out @ {Fore.LIGHTCYAN_EX + data["check_out"]}'
     Print(Fore.LIGHTMAGENTA_EX, status)
 
 
@@ -58,23 +59,33 @@ commands = {
     "out": {'func': check_out, 'args': 0},
     "file": {'func': file_manager.set_file, 'args': 1},
     "status": {'func': get_status, 'args': 0},
+    "pause": {'func': file_manager.pause, 'args': 0},
+    "unpause": {'func': file_manager.un_pause, 'args': 0},
     "test": {'func': test, 'args': 1}
 }
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="A cli punch clock")
+        prog='punch', formatter_class=argparse.RawTextHelpFormatter, description="A cli punch clock")
 
     # defining arguments for parser object
     # parser.add_argument("cmd", type=str)
-    parser.add_argument("cmd", type=str, nargs='*', metavar='message')
-    parser.add_argument("-o", "--output", default=None, metavar='file_name')
+    # parser.add_argument(
+    #     "-h", "--help", action="custom_help", help="show this help message")
+
+    parser.add_argument("cmd", type=str, nargs='*',
+                        metavar='command',
+                        help="in \t punch in \nout \t punch out \npause \t go on break \nunpause \t back from break\nstatus \t get current status' \nfile \t set output file path/name e.g \"punch file ~/work_hours.csv\"")
+
+    parser.add_argument("-o", "--output", default=None, help='set output file',
+                        metavar='file_name')
 
     args = parser.parse_args()
 
     Print(Fore.YELLOW, f'DEBUG: {Fore.YELLOW}{args}')
-
+    if args.output != None:
+        file_manager.set_file(['-', args.output])
     if commands[args.cmd[0]]['args'] < 1:
         commands[args.cmd[0]]['func']()
     else:
